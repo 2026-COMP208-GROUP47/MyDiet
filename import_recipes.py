@@ -59,7 +59,7 @@ def main():
           `id` INT NOT NULL PRIMARY KEY,
           `name` VARCHAR(255) NOT NULL,
           `total_time` VARCHAR(255),
-          `image_url` VARCHAR(600),
+                    `image_url` TEXT,
           `category` VARCHAR(255),
           `keywords` JSON,
           `ingredients` JSON,
