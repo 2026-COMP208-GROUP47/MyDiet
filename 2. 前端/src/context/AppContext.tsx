@@ -898,11 +898,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('mydiet_user_db_id', data.id)
 
     setUserState(prev => {
-      const formattedId = `UID-${String(data.id).padStart(6, '0')}`;
       const updated: UserProfile = {
         ...prev,
         name: data.username || prev.name,
-        uid: formattedId,
+        uid: data.id ? `UID-${String(data.id).padStart(6, '0')}` : prev.uid,
         age: data.age ?? prev.age,
         gender: data.gender ?? prev.gender,
         height: data.heightCm ?? prev.height,
@@ -972,7 +971,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Sign out — clear session and wipe identity to fetch fresh data for the next user
+// Sign out — clear session and wipe identity to fetch fresh data for the next user
   const signOut = useCallback(() => {
     // 1. Clear basic user auth info
     localStorage.removeItem('user')
