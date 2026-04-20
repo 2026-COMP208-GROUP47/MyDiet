@@ -1,7 +1,14 @@
 ﻿*.csv
 
+# Large video files (keep out of git)
+*.mov
+*.MOV
+
+# Ignore this specific large demo video
+CA1 Demo Documentation/Video/GROUP47.MOV
+
 # Each developer has their own DB password — keep local
 
-/CA1 Demo Documentation/Video/GROUP47.MOV
+
  
  
