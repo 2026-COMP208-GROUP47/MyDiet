@@ -1,11 +1,15 @@
 package com.mydiet.backend.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -17,17 +21,20 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Autowired
+    private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, ClientRegistrationRepository clientRegistrationRepository) throws Exception {
         http
-                // Enable Spring Security CORS support (Resolves OPTIONS preflight errors)
+                // Enable CORS support
                 .cors(Customizer.withDefaults())
-                // Disable CSRF protection
+                // Disable CSRF for stateless REST APIs
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Unconditionally permit all OPTIONS preflight requests
+                        // Permit preflight requests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Whitelist for normal endpoints
+                        // Public endpoints whitelist
                         .requestMatchers(
                                 "/",
                                 "/error",
@@ -39,15 +46,34 @@ public class SecurityConfig {
                                 "/api/meal-plan/**",
                                 "/oauth2/**",
                                 "/login/**",
-                                "/api/**" // CRITICAL PATCH: Allow all community data endpoints!
+                                "/api/**" 
                         ).permitAll()
                         .anyRequest().authenticated()
+                )
+                // Configure OAuth2 integration
+                .oauth2Login(oauth2 -> oauth2
+                        // Inject custom authorization endpoint to force account selection
+                        .authorizationEndpoint(endpoint -> endpoint
+                                .authorizationRequestResolver(customAuthorizationRequestResolver(clientRegistrationRepository))
+                        )
+                        .successHandler(oAuth2LoginSuccessHandler)
                 );
 
         return http.build();
     }
 
-    // Configure global CORS rules
+    // Custom resolver to append "prompt=select_account" to the Google OAuth request
+    private OAuth2AuthorizationRequestResolver customAuthorizationRequestResolver(ClientRegistrationRepository repo) {
+        DefaultOAuth2AuthorizationRequestResolver resolver =
+                new DefaultOAuth2AuthorizationRequestResolver(repo, "/oauth2/authorization");
+
+        resolver.setAuthorizationRequestCustomizer(customizer -> 
+                customizer.additionalParameters(params -> params.put("prompt", "select_account"))
+        );
+
+        return resolver;
+    }
+
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

@@ -10,6 +10,7 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import { useApp } from './context/AppContext'
+import OAuthRedirect from './pages/OAuthRedirect'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isLoggedIn } = useApp()
@@ -24,7 +25,7 @@ export default function App() {
       <Route path="/landing" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
-
+      <Route path="/oauth2-redirect" element={<OAuthRedirect />} />
       {/* Protected routes */}
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
         <Route path="/" element={<Homepage />} />

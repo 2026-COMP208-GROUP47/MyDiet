@@ -160,18 +160,24 @@ const handleSignIn = async (e: React.FormEvent) => {
                 <div className="h-px flex-1 bg-white/8" />
               </div>
 
-              {/* Social Buttons */}
-<div className="flex gap-3">
-  <button
-    onClick={() => {
-      console.log("Google login clicked");
-      window.location.href = "https://mydiet-l8vb.onrender.com/oauth2/authorization/google";
-    }}
-    className="flex h-11 flex-1 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10"
-  >
-    <span className="text-[16px] font-bold text-white">G</span>
-    <span className="text-[14px] font-medium text-white/80">Google</span>
-  </button>
+              {/* Social Authentication */}
+              <div className="flex gap-3">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    // Automatically determine whether the current environment is a local development environment or a cloud production environment
+                    const isLocal = window.location.hostname === 'localhost';
+                    const backendUrl = isLocal 
+                      ? 'http://localhost:8080' 
+                      : 'https://mydiet-l8vb.onrender.com';
+                      
+                    window.location.href = `${backendUrl}/oauth2/authorization/google`;
+                  }}
+                  className="flex h-[42px] flex-1 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10"
+                >
+                  <span className="text-[16px] font-bold text-white">G</span>
+                  <span className="text-[14px] font-medium text-white/80">Google</span>
+                </button>
   
                 <button className="flex h-11 flex-1 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10">
                   <span className="text-[18px] font-bold text-white"></span>

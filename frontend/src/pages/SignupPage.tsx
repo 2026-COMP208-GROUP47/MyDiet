@@ -210,13 +210,26 @@ const handleCreateAccount = async (e: React.FormEvent) => {
                 <div className="h-px flex-1 bg-white/8" />
               </div>
 
-              {/* Social Buttons */}
+              {/* Social Authentication */}
               <div className="flex gap-3">
-                <button className="flex h-[42px] flex-1 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    // 自动判断当前是本地开发环境还是云端生产环境
+                    const isLocal = window.location.hostname === 'localhost';
+                    const backendUrl = isLocal 
+                      ? 'http://localhost:8080' 
+                      : 'https://mydiet-l8vb.onrender.com';
+                      
+                    window.location.href = `${backendUrl}/oauth2/authorization/google`;
+                  }}
+                  className="flex h-[42px] flex-1 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10"
+                >
                   <span className="text-[16px] font-bold text-white">G</span>
                   <span className="text-[14px] font-medium text-white/80">Google</span>
                 </button>
-                <button className="flex h-[42px] flex-1 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10">
+                
+                <button type="button" className="flex h-[42px] flex-1 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10">
                   <span className="text-[18px] font-bold text-white"></span>
                   <span className="text-[14px] font-medium text-white/80">Apple</span>
                 </button>
