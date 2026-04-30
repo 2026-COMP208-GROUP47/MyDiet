@@ -75,6 +75,9 @@ public class UserController {
         }
         User user = optUser.get();
         Map<String, Object> profile = new HashMap<>();
+        profile.put("username", user.getUsername());
+        profile.put("avatarUrl", user.getAvatarUrl());
+        profile.put("avatarGradient", user.getAvatarGradient());
         profile.put("age", user.getAge());
         profile.put("gender", user.getGender());
         profile.put("heightCm", user.getHeightCm());
