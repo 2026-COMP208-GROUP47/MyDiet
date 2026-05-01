@@ -52,7 +52,7 @@ export default function OAuthRedirect() {
             targetWeight: dbUser.targetWeight || "", 
             goal: dbUser.goal || "",
             activityLevel: dbUser.activityLevel || "",
-            allergies: Array.isArray(dbUser.allergies) ? dbUser.allergies.join(', ') : (dbUser.allergies || "")
+            allergies: Array.isArray(dbUser.allergies) ? dbUser.allergies : []
           }
           localStorage.setItem('mydiet_user', JSON.stringify(restoredProfile))
 
