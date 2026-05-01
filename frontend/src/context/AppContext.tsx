@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import { defaultUser, todayMeals, type UserProfile, type DayMeals, type DayPlan, type Post, type Comment } from '../data/mockData'
-import { generateMealPlan, swapMealApi, type GenerateRequest, type GenerateResponse, type RecipeDTO } from '../api/mealPlanApi'
-
+import { generateMealPlan, swapMealApi, fetchCurrentPlan, type GenerateRequest, type GenerateResponse, type RecipeDTO } from '../api/mealPlanApi'
 interface NutritionData {
   calories: { current: number; target: number }
   protein: { current: number; target: number; color: string }
@@ -159,6 +158,58 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [plan, setPlan] = useState<DayPlan[]>(() => loadState('mydiet_plan', []))
   const [planCompleted, setPlanCompleted] = useState(() => loadState('mydiet_plan_done', false))
   const [planLoading, setPlanLoading] = useState(false)
+
+  useEffect(() => {
+    const loadSavedPlan = async () => {
+      const myDbId = localStorage.getItem('mydiet_user_db_id');
+      if (isLoggedIn && myDbId) {
+        setPlanLoading(true);
+        try {
+          const savedPlanResponse = await fetchCurrentPlan(Number(myDbId));
+          
+          if (savedPlanResponse && savedPlanResponse.weeklyPlan) {
+            const restoredPlan: DayPlan[] = savedPlanResponse.weeklyPlan.map((d: any) => ({
+              day: d.day,
+              meals: {
+                breakfast: recipeToMeal(d.meals.breakfast),
+                lunch: recipeToMeal(d.meals.lunch),
+                dinner: recipeToMeal(d.meals.dinner),
+              },
+              alternatives: {
+                breakfast: (d.alternatives?.breakfast || []).map((r: any) => recipeToMeal(r)),
+                lunch: (d.alternatives?.lunch || []).map((r: any) => recipeToMeal(r)),
+                dinner: (d.alternatives?.dinner || []).map((r: any) => recipeToMeal(r)),
+              },
+            }));
+
+            setPlan(restoredPlan);
+            saveState('mydiet_plan', restoredPlan);
+            
+            setTdee(savedPlanResponse.tdee);
+            saveState('mydiet_tdee', savedPlanResponse.tdee);
+            
+            if (savedPlanResponse.targets) {
+              saveState('mydiet_nutrition_targets', savedPlanResponse.targets);
+            }
+
+            setPlanCompleted(true);
+            saveState('mydiet_plan_done', true);
+            console.log("✅ 成功从数据库恢复用户的历史饮食计划！");
+          } else {
+             console.log("用户还没生成过食谱，显示问卷页面");
+          }
+        } catch (error) {
+          console.error("恢复历史食谱失败:", error);
+        } finally {
+          setPlanLoading(false);
+        }
+      }
+    };
+
+    loadSavedPlan();
+  }, [isLoggedIn]); 
+  // -------------------------------------------------------------
+
   const [tdee, setTdee] = useState(() => loadState('mydiet_tdee', 2200))
   const [unit, setUnitState] = useState<'metric' | 'imperial'>(() => loadState('mydiet_unit', 'metric'))
   const [selectedDate, setSelectedDateState] = useState(new Date().getDate())

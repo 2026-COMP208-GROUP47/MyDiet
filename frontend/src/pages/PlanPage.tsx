@@ -74,6 +74,7 @@ function PlanQuestionnaire() {
 
     try {
       await generatePlan({
+        userId: Number(localStorage.getItem('mydiet_user_db_id')) || undefined,
         age: form.age,
         gender: form.gender === 'Other' ? 'Male' : form.gender,
         weightKg: form.weight,
@@ -383,6 +384,7 @@ function PlanDashboard() {
             }
             try {
               await generatePlan({
+                userId: Number(localStorage.getItem('mydiet_user_db_id')) || undefined,
                 age: user.age,
                 gender: user.gender === 'Other' ? 'Male' : user.gender,
                 weightKg: user.weight,
