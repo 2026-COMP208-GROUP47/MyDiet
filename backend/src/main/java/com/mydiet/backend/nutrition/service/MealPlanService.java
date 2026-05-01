@@ -284,7 +284,10 @@ public class MealPlanService {
     // ====================================================================
     @org.springframework.transaction.annotation.Transactional
     protected void savePlanToDatabase(Long userId, MealPlanResponse resp) {
-        planRepo.deleteByUserId(userId);
+        planRepo.findByUserId(userId).ifPresent(oldPlan -> {
+            planRepo.delete(oldPlan);
+            planRepo.flush(); 
+        });
 
         com.mydiet.backend.entity.MealPlan plan = new com.mydiet.backend.entity.MealPlan();
         plan.setUserId(userId);
