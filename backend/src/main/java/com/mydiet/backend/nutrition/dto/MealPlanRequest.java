@@ -3,6 +3,9 @@ package com.mydiet.backend.nutrition.dto;
 import java.util.List;
 
 public class MealPlanRequest {
+
+    private Long userId;
+
     private int age;
     private String gender;          // "Male" or "Female"
     private double weightKg;
@@ -10,6 +13,13 @@ public class MealPlanRequest {
     private String activityLevel;   // "sedentary" | "light" | "moderate" | "active" | "veryActive"
     private String goal;             // "lose" | "gain" | "maintain" (default: maintain)
     private List<String> allergies; // e.g. ["peanut", "shrimp"]
+
+    public Long getUserId() { 
+        return userId; 
+    }
+    public void setUserId(Long userId) { 
+        this.userId = userId; 
+    }
 
     public int getAge() { return age; }
     public void setAge(int age) { this.age = age; }

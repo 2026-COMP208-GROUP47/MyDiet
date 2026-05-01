@@ -35,4 +35,13 @@ public class MealPlanController {
         SwapResponse result = service.swapMeal(req);
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/current")
+    public ResponseEntity<?> getCurrentPlan(@RequestParam Long userId) {
+        MealPlanResponse plan = service.getCurrentPlan(userId);
+        if (plan == null) {
+            return ResponseEntity.noContent().build(); 
+        }
+        return ResponseEntity.ok(plan);
+    }
 }

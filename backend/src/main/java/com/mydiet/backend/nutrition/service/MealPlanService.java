@@ -19,6 +19,17 @@ public class MealPlanService {
     @Autowired
     private RecipeCache recipeCache;
 
+    @Autowired
+    private com.mydiet.backend.repository.MealPlanRepository planRepo;
+    @Autowired
+    private com.mydiet.backend.repository.DailyMealRepository dailyRepo;
+    @Autowired
+    private com.mydiet.backend.repository.MealItemRepository itemRepo;
+    @Autowired
+    private com.mydiet.backend.nutrition.repository.RecipeRepository recipeRepo;
+    
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
     // ── 热量分配比例 3:4:3 ──
     private static final double BREAKFAST_RATIO = 0.3;
     private static final double LUNCH_RATIO     = 0.4;
@@ -104,6 +115,11 @@ public class MealPlanService {
         resp.setTdee(Math.round(adjustedTdee));
         resp.setTargets(tgt);
         resp.setWeeklyPlan(days);
+
+        if (req.getUserId() != null) {
+        savePlanToDatabase(req.getUserId(), resp);
+    }
+
         return resp;
     }
 
@@ -261,5 +277,102 @@ public class MealPlanService {
     private static class MealSlot {
         Recipe main;
         List<Recipe> alts = new ArrayList<>();
+    }
+
+    // ====================================================================
+    //  算法 1：持久化写入 (Write)
+    // ====================================================================
+    @org.springframework.transaction.annotation.Transactional
+    protected void savePlanToDatabase(Long userId, MealPlanResponse resp) {
+        planRepo.deleteByUserId(userId);
+
+        com.mydiet.backend.entity.MealPlan plan = new com.mydiet.backend.entity.MealPlan();
+        plan.setUserId(userId);
+        plan.setTdee(resp.getTdee());
+        plan.setBmr(resp.getBmr());
+        try {
+            plan.setTargetsJson(objectMapper.writeValueAsString(resp.getTargets()));
+        } catch (Exception e) {
+            plan.setTargetsJson("{}");
+        }
+        plan = planRepo.save(plan);
+
+        for (DayPlanDTO dayDto : resp.getWeeklyPlan()) {
+            com.mydiet.backend.entity.DailyMeal daily = new com.mydiet.backend.entity.DailyMeal();
+            daily.setPlanId(plan.getId());
+            daily.setDayName(dayDto.getDay());
+            daily = dailyRepo.save(daily);
+
+            saveItem(daily.getId(), "breakfast", true, dayDto.getMeals().getBreakfast());
+            saveItem(daily.getId(), "lunch", true, dayDto.getMeals().getLunch());
+            saveItem(daily.getId(), "dinner", true, dayDto.getMeals().getDinner());
+
+            for (RecipeDTO alt : dayDto.getAlternatives().getBreakfast()) saveItem(daily.getId(), "breakfast", false, alt);
+            for (RecipeDTO alt : dayDto.getAlternatives().getLunch()) saveItem(daily.getId(), "lunch", false, alt);
+            for (RecipeDTO alt : dayDto.getAlternatives().getDinner()) saveItem(daily.getId(), "dinner", false, alt);
+        }
+    }
+
+    private void saveItem(Long dailyId, String type, boolean isMain, RecipeDTO recipe) {
+        if (recipe == null) return;
+        com.mydiet.backend.entity.MealItem item = new com.mydiet.backend.entity.MealItem();
+        item.setDailyMealId(dailyId);
+        item.setMealType(type);
+        item.setIsMain(isMain);
+        item.setRecipeId(Integer.parseInt(recipe.getId()));
+        itemRepo.save(item);
+    }
+
+    // ====================================================================
+    //  算法 2：Rehydration 读取 (跨库合并装配)
+    // ====================================================================
+    public MealPlanResponse getCurrentPlan(Long userId) {
+        Optional<com.mydiet.backend.entity.MealPlan> planOpt = planRepo.findByUserId(userId);
+        if (planOpt.isEmpty()) return null; 
+
+        com.mydiet.backend.entity.MealPlan plan = planOpt.get();
+        MealPlanResponse resp = new MealPlanResponse();
+        resp.setTdee(plan.getTdee());
+        resp.setBmr(plan.getBmr());
+        
+        try {
+            resp.setTargets(objectMapper.readValue(plan.getTargetsJson(), DailyTargetsDTO.class));
+        } catch (Exception e) {}
+
+        List<DayPlanDTO> weeklyPlan = new ArrayList<>();
+        List<com.mydiet.backend.entity.DailyMeal> dailies = dailyRepo.findByPlanId(plan.getId());
+
+        for (com.mydiet.backend.entity.DailyMeal daily : dailies) {
+            DayPlanDTO dayDto = new DayPlanDTO();
+            dayDto.setDay(daily.getDayName());
+            
+            MealsDTO meals = new MealsDTO();
+            AlternativesDTO alts = new AlternativesDTO();
+            alts.setBreakfast(new ArrayList<>());
+            alts.setLunch(new ArrayList<>());
+            alts.setDinner(new ArrayList<>());
+
+            List<com.mydiet.backend.entity.MealItem> items = itemRepo.findByDailyMealId(daily.getId());
+            for (com.mydiet.backend.entity.MealItem item : items) {
+                Recipe recipe = recipeRepo.findById(item.getRecipeId()).orElse(null);
+                RecipeDTO recipeDto = toDto(recipe);
+                if (recipeDto == null) continue;
+
+                if (item.getIsMain()) {
+                    if ("breakfast".equals(item.getMealType())) meals.setBreakfast(recipeDto);
+                    if ("lunch".equals(item.getMealType())) meals.setLunch(recipeDto);
+                    if ("dinner".equals(item.getMealType())) meals.setDinner(recipeDto);
+                } else {
+                    if ("breakfast".equals(item.getMealType())) alts.getBreakfast().add(recipeDto);
+                    if ("lunch".equals(item.getMealType())) alts.getLunch().add(recipeDto);
+                    if ("dinner".equals(item.getMealType())) alts.getDinner().add(recipeDto);
+                }
+            }
+            dayDto.setMeals(meals);
+            dayDto.setAlternatives(alts);
+            weeklyPlan.add(dayDto);
+        }
+        resp.setWeeklyPlan(weeklyPlan);
+        return resp;
     }
 }

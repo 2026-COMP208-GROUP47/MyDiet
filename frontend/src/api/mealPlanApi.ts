@@ -3,6 +3,7 @@ const API_BASE = 'https://mydiet-l8vb.onrender.com'
 // ── Request / Response types matching backend DTOs ──
 
 export interface GenerateRequest {
+  userId?: number
   age: number
   gender: string
   weightKg: number
@@ -81,5 +82,15 @@ export async function swapMealApi(req: SwapRequest): Promise<SwapResponse> {
     body: JSON.stringify(req),
   })
   if (!resp.ok) throw new Error(`Swap failed: ${resp.status}`)
+  return resp.json()
+}
+
+export async function fetchCurrentPlan(userId: number): Promise<GenerateResponse | null> {
+  const resp = await fetch(`${API_BASE}/api/meal-plan/current?userId=${userId}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  })
+  if (resp.status === 204) return null; // 没有计划
+  if (!resp.ok) throw new Error(`Fetch plan failed: ${resp.status}`)
   return resp.json()
 }
