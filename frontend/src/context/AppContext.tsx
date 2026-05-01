@@ -112,6 +112,7 @@ interface AppContextType {
   refreshPosts: () => void
   togglePostLike: (postId: string) => void
   toggleCommentLike: (postId: string, commentId: string) => void
+  resetAppState: () => void;
   // Auth
   signIn: (email: string, password: string, remember?: boolean) => Promise<AuthResult>
   signUp: (name: string, email: string, password: string) => Promise<AuthResult>
@@ -863,6 +864,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  // Reset global app state
+  const resetAppState = useCallback(() => {
+    // 1. Clear all local storage cached data from the previous user
+    localStorage.removeItem('mydiet_user');
+    localStorage.removeItem('mydiet_plan');
+    localStorage.removeItem('mydiet_daily');
+    localStorage.removeItem('mydiet_user_db_id');
+    localStorage.removeItem('mydiet_nutrition_targets');
+
+    // 2. Reset React memory state to default values
+    setUserState(defaultUser);
+    setPlan([]);
+    setPlanCompleted(false);
+    setTdee(2200);
+    setDailyRecords({});
+  }, []);
+
+
   // Sign in — validate saved account and start a session
   const signIn = useCallback(async (email: string, password: string, remember = false): Promise<AuthResult> => {
   try {
@@ -1003,6 +1022,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleFollow,
       addComment, deleteComment, addReplyToComment, updatePostComments, refreshPosts, togglePostLike,
       toggleCommentLike,
+      resetAppState,
       signIn, signUp, signOut,
     }}>
       {children}

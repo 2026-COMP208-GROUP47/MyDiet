@@ -6,7 +6,7 @@ import { useApp } from '../context/AppContext'
 
 export default function SignupPage() {
   const navigate = useNavigate()
-  const { signUp } = useApp()
+  const { signUp, resetAppState } = useApp()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -38,6 +38,9 @@ const handleCreateAccount = async (e: React.FormEvent) => {
     setErrors(errs)
     return
   }
+
+  // After successful registration, completely clear any residual data from the previous account
+  resetAppState();
 
   const result = await signUp(`${firstName} ${lastName}`, email.trim().toLowerCase(), password)
 
@@ -215,7 +218,6 @@ const handleCreateAccount = async (e: React.FormEvent) => {
                 <button 
                   type="button" 
                   onClick={() => {
-                    // 自动判断当前是本地开发环境还是云端生产环境
                     const isLocal = window.location.hostname === 'localhost';
                     const backendUrl = isLocal 
                       ? 'http://localhost:8080' 

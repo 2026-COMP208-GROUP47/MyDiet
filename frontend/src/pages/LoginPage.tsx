@@ -6,7 +6,7 @@ import { useApp } from '../context/AppContext'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { signIn, planCompleted } = useApp()
+  const { signIn, planCompleted, resetAppState } = useApp()
   const [email, setEmail] = useState(() => localStorage.getItem('mydiet_remembered_email') || '')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
@@ -27,6 +27,9 @@ const handleSignIn = async (e: React.FormEvent) => {
     setErrors(newErrors)
     return
   }
+
+  // After successful login, clear the plan and cached data of old accounts
+  resetAppState();
 
   const result = await signIn(normalizedEmail, password, remember)
 
