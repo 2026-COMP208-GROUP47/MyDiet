@@ -44,4 +44,10 @@ public class MealPlanController {
         }
         return ResponseEntity.ok(plan);
     }
+
+    @PostMapping("/sync")
+    public ResponseEntity<?> syncPlan(@RequestParam Long userId, @RequestBody MealPlanResponse updatedPlan) {
+        service.savePlanToDatabase(userId, updatedPlan);
+        return ResponseEntity.ok().build();
+    }
 }

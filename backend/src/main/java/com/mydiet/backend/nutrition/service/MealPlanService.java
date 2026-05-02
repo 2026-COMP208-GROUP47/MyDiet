@@ -283,7 +283,7 @@ public class MealPlanService {
     //  算法 1：持久化写入 (Write)
     // ====================================================================
     @org.springframework.transaction.annotation.Transactional
-    protected void savePlanToDatabase(Long userId, MealPlanResponse resp) {
+    public void savePlanToDatabase(Long userId, MealPlanResponse resp) {
         planRepo.findByUserId(userId).ifPresent(oldPlan -> {
             planRepo.delete(oldPlan);
             planRepo.flush(); 

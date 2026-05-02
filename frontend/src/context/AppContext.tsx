@@ -194,12 +194,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
             setPlanCompleted(true);
             saveState('mydiet_plan_done', true);
-            console.log("✅ 成功从数据库恢复用户的历史饮食计划！");
+            console.log("Successfully restored the user's historical meal plan from the database!");
           } else {
-             console.log("用户还没生成过食谱，显示问卷页面");
+             console.log("The user hasn't generated any recipes yet, show the questionnaire page");
           }
         } catch (error) {
-          console.error("恢复历史食谱失败:", error);
+          console.error("Failed to restore historical recipe:", error);
         } finally {
           setPlanLoading(false);
         }
@@ -209,6 +209,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loadSavedPlan();
   }, [isLoggedIn]); 
   // -------------------------------------------------------------
+
+  const syncPlanToDB = (updatedPlan: DayPlan[]) => {
+    const myDbId = localStorage.getItem('mydiet_user_db_id');
+    if (!myDbId) return;
+    
+    const currentTdee = Number(localStorage.getItem('mydiet_tdee')) || 2200;
+    const targets = JSON.parse(localStorage.getItem('mydiet_nutrition_targets') || '{}');
+
+    const payload = {
+      bmr: 0,
+      tdee: currentTdee,
+      targets: targets,
+      weeklyPlan: updatedPlan 
+    };
+
+    fetch(`https://mydiet-l8vb.onrender.com/api/meal-plan/sync?userId=${myDbId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(e => console.error("Failed to synchronize to the database:", e));
+  };
 
   const [tdee, setTdee] = useState(() => loadState('mydiet_tdee', 2200))
   const [unit, setUnitState] = useState<'metric' | 'imperial'>(() => loadState('mydiet_unit', 'metric'))
@@ -543,6 +564,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         })
         saveState('mydiet_plan', updated)
+        syncPlanToDB(updated);
         return updated
       })
     } catch (err) {
@@ -559,6 +581,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return { ...d, meals: { ...d.meals, [mealType]: { ...randomAlt, checked: false } } }
         })
         saveState('mydiet_plan', updated)
+        syncPlanToDB(updated);
         return updated
       })
     }
@@ -577,6 +600,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       })
       saveState('mydiet_plan', updated)
+      syncPlanToDB(updated);
       return updated
     })
   }, [])
