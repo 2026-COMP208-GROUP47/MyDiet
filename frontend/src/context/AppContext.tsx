@@ -213,15 +213,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const syncPlanToDB = (updatedPlan: DayPlan[]) => {
     const myDbId = localStorage.getItem('mydiet_user_db_id');
     if (!myDbId) return;
-    
+
     const currentTdee = Number(localStorage.getItem('mydiet_tdee')) || 2200;
-    const targets = JSON.parse(localStorage.getItem('mydiet_nutrition_targets') || '{}');
+    const rawTargets = localStorage.getItem('mydiet_nutrition_targets');
+    const targets = rawTargets ? JSON.parse(rawTargets) : { calories: currentTdee, protein: 0, carbs: 0, fats: 0, fiber: 0 };
+
+    const simplifyMeal = (meal: any) => {
+      if (!meal) return null;
+      return { id: meal.id }; 
+    };
+
+    const safeWeeklyPlan = updatedPlan.map(day => ({
+      day: day.day,
+      meals: {
+        breakfast: simplifyMeal(day.meals.breakfast),
+        lunch: simplifyMeal(day.meals.lunch),
+        dinner: simplifyMeal(day.meals.dinner)
+      },
+      alternatives: {
+        breakfast: (day.alternatives.breakfast || []).map(simplifyMeal),
+        lunch: (day.alternatives.lunch || []).map(simplifyMeal),
+        dinner: (day.alternatives.dinner || []).map(simplifyMeal)
+      }
+    }));
 
     const payload = {
       bmr: 0,
       tdee: currentTdee,
       targets: targets,
-      weeklyPlan: updatedPlan 
+      weeklyPlan: safeWeeklyPlan
     };
 
     fetch(`https://mydiet-l8vb.onrender.com/api/meal-plan/sync?userId=${myDbId}`, {
