@@ -359,7 +359,7 @@ export default function Homepage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-[24px] font-bold text-white">
-  Morning, {JSON.parse(localStorage.getItem('user') || '{}').username}!
+  Morning, {user.name}!
 </h1>
           <p className="text-[14px] text-white/50">Let&apos;s track your nutrition today</p>
         </div>
