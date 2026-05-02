@@ -1015,7 +1015,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const formattedId = `UID-${String(data.id).padStart(6, '0')}`;
       const updated: UserProfile = {
         ...prev,
-        name: data.username || prev.name,
+        name: data.username || data.name || prev.name, 
         uid: formattedId,
         age: data.age ?? prev.age,
         gender: data.gender ?? prev.gender,
