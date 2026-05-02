@@ -1012,20 +1012,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('mydiet_user_db_id', data.id)
 
     setUserState(prev => {
-      const formattedId = `UID-${String(data.id).padStart(6, '0')}`;
+      const userData = data.user ? data.user : data;
+
+      const formattedId = `UID-${String(userData.id || data.id).padStart(6, '0')}`;
+      
       const updated: UserProfile = {
         ...prev,
-        name: data.username || data.name || prev.name, 
+        name: userData.username || userData.name || prev.name,
         uid: formattedId,
-        age: data.age ?? prev.age,
-        gender: data.gender ?? prev.gender,
-        height: data.heightCm ?? prev.height,
-        weight: data.weightKg ?? prev.weight,
-        targetWeight: data.targetWeight ?? prev.targetWeight,
-        goal: data.goal ?? prev.goal,
-        activityLevel: data.activityLevel ?? prev.activityLevel,
-        allergies: data.allergies ?? prev.allergies,
-        restrictions: data.restrictions ?? prev.restrictions,
+        age: userData.age ?? prev.age,
+        gender: userData.gender ?? prev.gender,
+        height: userData.heightCm ?? prev.height,
+        weight: userData.weightKg ?? prev.weight,
+        targetWeight: userData.targetWeight ?? prev.targetWeight,
+        goal: userData.goal ?? prev.goal,
+        activityLevel: userData.activityLevel ?? prev.activityLevel,
+        allergies: userData.allergies ?? prev.allergies,
+        restrictions: userData.restrictions ?? prev.restrictions,
       }
       updated.bmi = +(updated.weight / ((updated.height / 100) ** 2)).toFixed(1)
       saveState('mydiet_user', updated)
@@ -1059,20 +1062,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return { success: false, message: data.message || 'Signup failed' }
       }
 
-      localStorage.setItem('user', JSON.stringify(data))
-      localStorage.setItem('mydiet_logged_in', 'true')
-      
-      localStorage.setItem('mydiet_user_db_id', data.id)
+      const userData = data.user ? data.user : data;
 
-      const formattedId = `UID-${String(data.id).padStart(6, '0')}`;
+      localStorage.setItem('user', JSON.stringify(data));
+      localStorage.setItem('mydiet_logged_in', 'true');
+      
+      localStorage.setItem('mydiet_user_db_id', userData.id);
+
+      const formattedId = `UID-${String(userData.id).padStart(6, '0')}`;
 
       setUserState(prev => {
         const updated = {
           ...prev,
-          name: data.username || prev.name,
+          name: userData.username || userData.name || name || prev.name,
           uid: formattedId 
         }
-        // Save the updated profile state to local storage so it persists on refresh
         saveState('mydiet_user', updated) 
         return updated
       })
