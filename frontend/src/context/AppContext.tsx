@@ -997,6 +997,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { success: false, message: data.message || 'Login failed' }
     }
 
+    const userData = data.user ? data.user : data;
+    data.name = userData.username || userData.name;
+    userData.name = data.name;
+
     // ... inside signIn function ...
     if (remember) {
       localStorage.setItem('user', JSON.stringify(data))
@@ -1063,6 +1067,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       const userData = data.user ? data.user : data;
+      data.name = userData.username || userData.name || name;
+      userData.name = data.name;
 
       localStorage.setItem('user', JSON.stringify(data));
       localStorage.setItem('mydiet_logged_in', 'true');
