@@ -144,6 +144,34 @@ CREATE TABLE IF NOT EXISTS `dietary_references` (
   `sugar_g` FLOAT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- individual recipe
+USE mydiet_db;
+CREATE TABLE IF NOT EXISTS `meal_plans` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` BIGINT NOT NULL UNIQUE COMMENT 'One user has one active plan for now',
+  `tdee` DOUBLE,
+  `bmr` DOUBLE,
+  `targets_json` JSON COMMENT 'Store DailyTargetsDTO as JSON',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `daily_meals` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `plan_id` BIGINT NOT NULL,
+  `day_name` VARCHAR(50) COMMENT 'Monday, Tuesday, etc.',
+  FOREIGN KEY (`plan_id`) REFERENCES `meal_plans`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `meal_items` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `daily_meal_id` BIGINT NOT NULL,
+  `meal_type` VARCHAR(50) COMMENT 'breakfast, lunch, dinner',
+  `is_main` BOOLEAN COMMENT 'true for main meal, false for alternatives',
+  `recipe_id` INT NOT NULL COMMENT 'Points to mydiet_nutrition.recipes',
+  FOREIGN KEY (`daily_meal_id`) REFERENCES `daily_meals`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ==========================================
 -- MOCK DATA
 -- ==========================================
