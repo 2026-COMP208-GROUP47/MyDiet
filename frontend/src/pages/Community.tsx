@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, MessageCircle, Send, X, Search, RefreshCw, Plus, TrendingUp, Clock, Trophy, Trash2, CornerDownRight } from 'lucide-react'
-import { trendingTags, topContributors, type Post, type Comment } from '../data/mockData'
+import { type Post, type Comment } from '../data/mockData'
 import { useApp } from '../context/AppContext'
 import { useNavigate } from 'react-router-dom' // New import
 
@@ -490,9 +490,34 @@ function TrendingPostCard({ post, onClick }: { post: Post; onClick: () => void }
   )
 }
 
-// ==================== Community ====================
 export default function Community() {
   const { posts, trendingPostsList, refreshPosts } = useApp()
+  const realTopContributors = useMemo(() => {
+    const contributorMap = new Map<string, { name: string, gradient: string, score: number }>()
+    posts.forEach(post => {
+      const current = contributorMap.get(post.author) || { name: post.author, gradient: post.avatarGradient, score: 0 }
+      current.score += post.likes
+      contributorMap.set(post.author, current)
+    })
+    return Array.from(contributorMap.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5) 
+  }, [posts])
+
+  const realTrendingTags = useMemo(() => {
+    const tagCount = new Map<string, number>()
+    posts.forEach(post => {
+      post.tags.forEach(tag => {
+        const cleanTag = tag.startsWith('#') ? tag : `#${tag}`
+        tagCount.set(cleanTag, (tagCount.get(cleanTag) || 0) + 1)
+      })
+    })
+    return Array.from(tagCount.entries())
+      .map(([name, count]) => ({ name, posts: count, active: false }))
+      .sort((a, b) => b.posts - a.posts) 
+      .slice(0, 5) 
+  }, [posts])
+
   const [tab, setTab] = useState<'recommended' | 'trending'>('recommended')
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -628,7 +653,7 @@ export default function Community() {
                 </div>
                 <button className="rounded-full px-2.5 py-1 text-[11px] text-white/40 ring-1 ring-white/20 transition hover:text-white">more</button>
               </div>
-              {trendingTags.map((tag) => (
+              {realtrendingTags.map((tag) => (
                 <div key={tag.name}
                   className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 transition ${
                     tag.active ? 'bg-[#4ADE80]/10 ring-1 ring-[#4ADE80]/20' : 'bg-white/3 hover:bg-white/5'
@@ -647,7 +672,7 @@ export default function Community() {
                 </div>
                 <button className="rounded-full px-2.5 py-1 text-[11px] text-white/40 ring-1 ring-white/20 transition hover:text-white">more</button>
               </div>
-              {topContributors.map((c, i) => (
+              {realtopContributors.map((c, i) => (
                 <div key={c.name} className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <span className="w-4 text-[14px] font-bold" style={{ color: i === 0 ? '#FBBF24' : i === 1 ? '#C0C0C0' : '#CD7F32' }}>{i + 1}</span>
