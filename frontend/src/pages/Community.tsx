@@ -491,6 +491,7 @@ function TrendingPostCard({ post, onClick }: { post: Post; onClick: () => void }
 }
 
 export default function Community() {
+  const navigate = useNavigate()
   const { posts, trendingPostsList, refreshPosts } = useApp()
   
   const realTopContributors = useMemo<{ name: string; gradient: string; score: number }[]>(() => {
@@ -652,7 +653,6 @@ export default function Community() {
                   <TrendingUp className="h-4 w-4 text-[#4ADE80]" />
                   <span className="text-[15px] font-bold text-white/80">Tags</span>
                 </div>
-                <button className="rounded-full px-2.5 py-1 text-[11px] text-white/40 ring-1 ring-white/20 transition hover:text-white">more</button>
               </div>
               {realTrendingTags.map((tag) => (
                 <div key={tag.name}
@@ -671,14 +671,18 @@ export default function Community() {
                   <Trophy className="h-4 w-4 text-[#FBBF24]" />
                   <span className="text-[15px] font-bold text-white/80">Top Contributors</span>
                 </div>
-                <button className="rounded-full px-2.5 py-1 text-[11px] text-white/40 ring-1 ring-white/20 transition hover:text-white">more</button>
               </div>
               {realTopContributors.map((c, i) => (
                 <div key={c.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
+                  {}
+                  <div 
+                    onClick={() => navigate(`/profile/${encodeURIComponent(c.name)}`)}
+                    className="group flex cursor-pointer items-center gap-2.5 transition"
+                    title={`Visit ${c.name}'s profile`}
+                  >
                     <span className="w-4 text-[14px] font-bold" style={{ color: i === 0 ? '#FBBF24' : i === 1 ? '#C0C0C0' : '#CD7F32' }}>{i + 1}</span>
-                    <div className={`h-7 w-7 rounded-full bg-gradient-to-br ${c.gradient}`} />
-                    <span className="text-[13px] text-white/80">{c.name}</span>
+                    <div className={`h-7 w-7 rounded-full bg-gradient-to-br ${c.gradient} transition group-hover:scale-110`} />
+                    <span className="text-[13px] text-white/80 transition group-hover:text-[#4ADE80]">{c.name}</span>
                   </div>
                   <span className="text-[13px] font-bold text-[#4ADE80]">{c.score}</span>
                 </div>
